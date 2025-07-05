@@ -1,42 +1,15 @@
 import React, { useState, useEffect, createContext, useContext } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useTheme } from "../../Context/ThemeContext";
-import {
-  Heart,
+import { 
   MessageCircle,
   TrendingUp,
   Target,
   Calendar,
-  User,
-  Menu,
-  X,
-  Send,
-  Star,
-  CheckCircle,
-  Plus,
   BarChart3,
-  Home,
-  LogOut,
-  Eye,
-  EyeOff,
-  Smile,
-  Meh,
-  Frown,
-  ArrowRight,
   Award,
-  Clock,
-  Moon,
-  Sun,
-  Trophy,
-  Edit,
-  Trash2,
 } from "lucide-react";
 
-
-import Button from "../Utility-Component/Button";
 import Card from "../Utility-Component/Card";
-import Modal from "../Utility-Component/Modal";
-import Input from "../Utility-Component/Input";
 
 const FeaturesSection = () => {
   const features = [
@@ -76,7 +49,7 @@ const FeaturesSection = () => {
   ];
 
   return (
-    <section className="py-20 px-4 bg-gray-50 dark:bg-gray-900">
+    <section className="py-20 px-4 bg-gray-50 text-white dark:bg-gray-900">
       <div className="max-w-6xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -84,7 +57,7 @@ const FeaturesSection = () => {
           viewport={{ once: true }}
           className="text-center mb-16"
         >
-          <h2 className="text-3xl md:text-4xl font-bold mb-4 text-gray-800">
+          <h2 className="text-3xl md:text-4xl font-bold mb-4 text-white dark:text-gray-200">
             Features to Support Your Journey
           </h2>
           <p className="text-lg text-gray-600">
@@ -102,11 +75,11 @@ const FeaturesSection = () => {
               transition={{ delay: index * 0.1 }}
             >
               <Card className="p-6 h-full">
-                <feature.icon className="h-12 w-12 text-purple-500 mb-4" />
-                <h3 className="text-xl font-semibold mb-3 text-gray-800">
+                <feature.icon className="h-12 w-12 text-gray-200 mb-4" />
+                <h3 className="text-xl font-semibold mb-3 text-gray-200">
                   {feature.title}
                 </h3>
-                <p className="text-gray-600">{feature.description}</p>
+                <p className="text-gray-200">{feature.description}</p>
               </Card>
             </motion.div>
           ))}

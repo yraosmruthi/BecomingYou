@@ -1,44 +1,15 @@
-import React, { useState, useEffect, createContext, useContext } from "react";
+import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useTheme } from "../../Context/ThemeContext";
+import { useNavigate } from "react-router-dom";
 import {
-  Heart,
-  MessageCircle,
-  TrendingUp,
-  Target,
-  Calendar,
-  User,
-  Menu,
-  X,
-  Send,
-  Star,
-  CheckCircle,
-  Plus,
-  BarChart3,
-  Home,
-  LogOut,
-  Eye,
-  EyeOff,
-  Smile,
-  Meh,
-  Frown,
-  ArrowRight,
-  Award,
-  Clock,
-  Moon,
-  Sun,
-  Trophy,
-  Edit,
-  Trash2,
+  ArrowRight, 
 } from "lucide-react";
 
-
 import Button from "../Utility-Component/Button";
-import Card from "../Utility-Component/Card";
-import Modal from "../Utility-Component/Modal";
-import Input from "../Utility-Component/Input";
 
-const HeroSection = ({ navigate }) => (
+const HeroSection = () => {
+  const navigate = useNavigate();
+  return (
   <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
     <div className="absolute inset-0 bg-gray-50 dark:bg-gray-900" />
     <div className="relative z-10 text-center px-4 max-w-4xl mx-auto">
@@ -58,17 +29,12 @@ const HeroSection = ({ navigate }) => (
             Get Started
             <ArrowRight className="ml-2 h-5 w-5" />
           </Button>
-          <Button
-            variant="secondary"
-            size="lg"
-            onClick={() => navigate("/auth")}
-          >
-            Login
-          </Button>
+          
         </div>
       </motion.div>
     </div>
   </section>
 );
+}
 
 export default HeroSection;

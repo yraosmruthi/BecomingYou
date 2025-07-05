@@ -1,40 +1,12 @@
-import React, { useState, useEffect, createContext, useContext } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Heart,
-  MessageCircle,
-  TrendingUp,
   Target,
-  Calendar,
-  User,
-  Menu,
-  X,
-  Send,
-  Star,
   CheckCircle,
-  Plus,
-  BarChart3,
-  Home,
-  LogOut,
-  Eye,
-  EyeOff,
-  Smile,
-  Meh,
-  Frown,
-  ArrowRight,
-  Award,
   Clock,
-  Moon,
-  Sun,
-  Trophy,
-  Edit,
-  Trash2,
 } from "lucide-react";
 
 import Button from "../Utility-Component/Button";
 import Card from "../Utility-Component/Card";
-import Input from "../Utility-Component/Input";
-import Modal from "../Utility-Component/Modal";
 
 const GoalCard = ({ goal, onUpdate, onDelete }) => {
   const progressColor =

@@ -1,13 +1,9 @@
 import {
-  BrowserRouter as Router,
   Routes,
   Route,
   Navigate,
 } from "react-router-dom";
 import React, { useState } from "react";
-import { useTheme } from "./Context/ThemeContext";
-
-import { ThemeProvider } from "./Context/ThemeContext";
 import Navbar from "./components/Nav-Component/Navbar";
 import HomePage from "./Pages/HomePage";
 import AuthPage from "./Pages/AuthPage";
@@ -27,25 +23,14 @@ const App = () => {
   };
 
   return (
-   
-              
-        <AppContent user={user} onLogout={handleLogout} onLogin={handleLogin} />
-      
-   
+   <AppContent user={user} onLogout={handleLogout} onLogin={handleLogin} />   
   );
 };
 
 const AppContent = ({ user, onLogout, onLogin }) => {
-  const { isDarkMode } = useTheme();
 
   return (
-    <div
-      className={`min-h-screen transition-colors ${
-        isDarkMode
-          ? "bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900"
-          : "bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50"
-      }`}
-    >
+    <div className="min-h-screen transition-colors bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900" >
       <Navbar user={user} onLogout={onLogout} />
       <Routes>
         <Route path="/" element={<HomePage />} />

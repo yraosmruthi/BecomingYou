@@ -1,47 +1,21 @@
-import React, { useState, useEffect, createContext, useContext } from "react";
+import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Button from "../Utility-Component/Button";
-import Card from "../Utility-Component/Card";
-import Modal from "../Utility-Component/Modal";
-import Input from "../Utility-Component/Input";
-import ThemeToggle from "../Theme-Component/ThemeToggle";
-import { useTheme } from "../../Context/ThemeContext";
 import { useNavigate } from "react-router-dom";
 import {
   Heart,
   MessageCircle,
-  TrendingUp,
   Target,
-  Calendar,
   User,
   Menu,
   X,
-  Send,
-  Star,
-  CheckCircle,
-  Plus,
-  BarChart3,
-  Home,
   LogOut,
-  Eye,
-  EyeOff,
-  Smile,
-  Meh,
-  Frown,
-  ArrowRight,
-  Award,
-  Clock,
-  Moon,
-  Sun,
-  Trophy,
-  Edit,
-  Trash2,
+  Home,
 } from "lucide-react";
 
-const Navbar = ({ currentRoute, navigate, user, onLogout }) => {
-  const { isDarkMode } = useTheme();
+const Navbar = ({ currentRoute, user, onLogout }) => {
+  const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  
 
   const navItems = user
     ? [
@@ -56,11 +30,12 @@ const Navbar = ({ currentRoute, navigate, user, onLogout }) => {
 
   return (
     <nav
-      className={`backdrop-blur-lg shadow-sm border-b sticky top-0 z-50 transition-colors duration-500 ${
-        isDarkMode
-          ? "bg-gradient-to-br from-black/95 via-gray-900/95 to-black/95 border-gray-800/30"
-          : "bg-gradient-to-br from-white/95 via-white/98 to-white/95 border-gray-200/50"
-      }`}
+      className="backdrop-blur-lg shadow-sm border-b sticky top-0 z-50 transition-colors duration-500 
+        // keep this if you still support dark mode styles
+        
+          bg-gradient-to-br from-black/95 via-gray-900/95 to-black/95 border-gray-800/30"
+          
+      
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
@@ -87,7 +62,6 @@ const Navbar = ({ currentRoute, navigate, user, onLogout }) => {
                 <span>{item.label}</span>
               </Button>
             ))}
-            <ThemeToggle />
             {user && (
               <Button
                 variant="ghost"
@@ -101,7 +75,6 @@ const Navbar = ({ currentRoute, navigate, user, onLogout }) => {
           </div>
 
           <div className="md:hidden flex items-center space-x-2">
-            <ThemeToggle />
             <Button variant="ghost" onClick={() => setIsMenuOpen(!isMenuOpen)}>
               {isMenuOpen ? (
                 <X className="h-5 w-5" />
@@ -151,4 +124,5 @@ const Navbar = ({ currentRoute, navigate, user, onLogout }) => {
     </nav>
   );
 };
+
 export default Navbar;

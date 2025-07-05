@@ -1,44 +1,8 @@
-import React, { useState, useEffect, createContext, useContext } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import React, { useState } from "react";
 import ChatMessage from "../components/Chat-Component/ChatMessage";
 import FeedbackModal from "../components/Chat-Component/FeedbackModal";
-
-import {
-  Heart,
-  MessageCircle,
-  TrendingUp,
-  Target,
-  Calendar,
-  User,
-  Menu,
-  X,
-  Send,
-  Star,
-  CheckCircle,
-  Plus,
-  BarChart3,
-  Home,
-  LogOut,
-  Eye,
-  EyeOff,
-  Smile,
-  Meh,
-  Frown,
-  ArrowRight,
-  Award,
-  Clock,
-  Moon,
-  Sun,
-  Trophy,
-  Edit,
-  Trash2,
-} from "lucide-react";
-
-
-import Button from "../components/Utility-Component/Button"
-import Card from "../components/Utility-Component/Card"
-import Modal from "../components/Utility-Component/Modal"
-import Input from "../components/Utility-Component/Input"
+import { Heart, Send } from "lucide-react";
+import Button from "../components/Utility-Component/Button";
 
 const ChatPage = () => {
   const [messages, setMessages] = useState([
@@ -61,28 +25,24 @@ const ChatPage = () => {
     "I appreciate you being so open with me. That takes courage.",
   ];
 
-  const sendMessage = async () => {
+  const sendMessage = () => {
     if (!inputMessage.trim()) return;
-
-    const newMessage = {
+    const userMsg = {
       id: messages.length + 1,
       text: inputMessage,
       isUser: true,
     };
-
-    setMessages((prev) => [...prev, newMessage]);
+    setMessages((prev) => [...prev, userMsg]);
     setInputMessage("");
     setIsTyping(true);
-
-    // Simulate AI response
     setTimeout(() => {
-      setIsTyping(false);
-      const aiResponse = {
+      const aiMsg = {
         id: messages.length + 2,
         text: aiResponses[Math.floor(Math.random() * aiResponses.length)],
         isUser: false,
       };
-      setMessages((prev) => [...prev, aiResponse]);
+      setMessages((prev) => [...prev, aiMsg]);
+      setIsTyping(false);
     }, 2000);
   };
 
@@ -93,21 +53,14 @@ const ChatPage = () => {
     }
   };
 
-  const endSession = () => {
-    setShowFeedback(true);
-  };
-
-  const handleFeedbackSubmit = (feedbackData) => {
-    console.log("Feedback:", feedbackData);
-    // Here you would typically save the feedback to your database
-  };
+  
 
   return (
     <div className="h-screen flex flex-col bg-gray-50 dark:bg-gray-900">
-      {/* Chat Header */}
-      <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md border-b border-white/50 dark:border-gray-700/50 p-4">
+      {/* Header */}
+      <header className="bg-white/80 dark:bg-gray-800/80 backdrop-blur border-b border-white/40 dark:border-gray-700/40 p-4">
         <div className="max-w-4xl mx-auto flex justify-between items-center">
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full flex items-center justify-center">
               <Heart className="h-6 w-6 text-white" />
             </div>
@@ -120,49 +73,44 @@ const ChatPage = () => {
               </p>
             </div>
           </div>
-          <Button variant="secondary" onClick={endSession}>
+          <Button variant="secondary" onClick={() => setShowFeedback(true)}>
             End Session
           </Button>
         </div>
-      </div>
+      </header>
 
       {/* Chat Messages */}
       <div className="flex-1 overflow-y-auto p-4">
-        <div className="max-w-4xl mx-auto">
-          {messages.map((message) => (
-            <ChatMessage
-              key={message.id}
-              message={message.text}
-              isUser={message.isUser}
-            />
+        <div className="max-w-4xl mx-auto space-y-2">
+          {messages.map((msg) => (
+            <ChatMessage key={msg.id} message={msg.text} isUser={msg.isUser} />
           ))}
-          {isTyping && <ChatMessage isTyping={true} />}
+          {isTyping && <ChatMessage isTyping />}
         </div>
       </div>
 
-      {/* Chat Input */}
-      <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md border-t border-white/50 dark:border-gray-700/50 p-4">
-        <div className="max-w-4xl mx-auto flex space-x-4">
-          <div className="flex-1 relative">
-            <textarea
-              value={inputMessage}
-              onChange={(e) => setInputMessage(e.target.value)}
-              onKeyPress={handleKeyPress}
-              placeholder="Type your message here..."
-              className="w-full p-3 pr-12 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 rounded-xl resize-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-              rows="1"
-            />
-          </div>
+      {/* Input */}
+      <footer className="bg-white/80 dark:bg-gray-800/80 backdrop-blur border-t border-white/40 dark:border-gray-700/40 p-4">
+        <div className="max-w-4xl mx-auto flex gap-4">
+          <textarea
+            value={inputMessage}
+            onChange={(e) => setInputMessage(e.target.value)}
+            onKeyPress={handleKeyPress}
+            placeholder="Type your message here..."
+            className="flex-1 p-3 rounded-xl resize-none border bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 border-gray-200 dark:border-gray-600 focus:ring-2 focus:ring-purple-500 focus:outline-none"
+            rows={1}
+          />
           <Button onClick={sendMessage} disabled={!inputMessage.trim()}>
             <Send className="h-5 w-5" />
           </Button>
         </div>
-      </div>
+      </footer>
 
+      {/* Feedback Modal */}
       <FeedbackModal
         isOpen={showFeedback}
         onClose={() => setShowFeedback(false)}
-        onSubmit={handleFeedbackSubmit}
+        onSubmit={(data) => console.log("Feedback:", data)}
       />
     </div>
   );

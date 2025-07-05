@@ -3,46 +3,19 @@ import { motion, AnimatePresence } from "framer-motion";
 import MoodChart from "../components/Profile-Component/MoodChart";
 import MoodQuiz from "../components/MoodQuiz-Component/MoodQuiz";
 import GoalProgress from "../components/Profile-Component/GoalProgress";
-import GoalCard from "../components/Goal-Component/GoalCard";
+import { useNavigate } from "react-router-dom";
 
 import {
-  Heart,
   MessageCircle,
-  TrendingUp,
-  Target,
   Calendar,
-  User,
-  Menu,
-  X,
-  Send,
-  Star,
   CheckCircle,
-  Plus,
-  BarChart3,
-  Home,
-  LogOut,
-  Eye,
-  EyeOff,
-  Smile,
-  Meh,
-  Frown,
-  ArrowRight,
-  Award,
-  Clock,
-  Moon,
-  Sun,
-  Trophy,
-  Edit,
-  Trash2,
 } from "lucide-react";
 
-
-import Button from "../components/Utility-Component/Button";
 import Card from "../components/Utility-Component/Card";
-import Modal from "../components/Utility-Component/Modal";
-import Input from "../components/Utility-Component/Input";
+import Button from "../components/Utility-Component/Button";
 
-const ProfileDashboard = ({ user, navigate }) => {
+const ProfileDashboard = ({ user }) => {
+  const navigate = useNavigate();
   const [showMoodQuiz, setShowMoodQuiz] = useState(false);
   const [moodData, setMoodData] = useState([
     { date: "2025-06-23", mood: 4, note: "Good day overall" },
