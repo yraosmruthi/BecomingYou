@@ -4,7 +4,7 @@ import ChatMessage from "../components/Chat-Component/ChatMessage";
 import FeedbackModal from "../components/Chat-Component/FeedbackModal";
 import { Heart, Send, Loader2, AlertCircle } from "lucide-react";
 import Button from "../components/Utility-Component/Button";
-import {useAuth}  from "../Context/Auth-context"// Assuming you have an auth hook
+import { useAuth } from "../Context/Auth-context"; // Assuming you have an auth hook
 import { chatAPI } from "../services/chatAPI";
 
 const ChatPage = () => {
@@ -111,7 +111,7 @@ const ChatPage = () => {
         inputMessage.trim(),
         contextData
       );
-      
+
       const aiMessage = {
         id: Date.now() + 1,
         text: response.aiResponse, // This should match your backend response
@@ -172,7 +172,7 @@ const ChatPage = () => {
 
   if (isLoading) {
     return (
-      <div className="h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+      <div className="h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 overflow-hidden">
         <div className="text-center">
           <Loader2 className="h-8 w-8 animate-spin text-purple-500 mx-auto mb-4" />
           <p className="text-gray-600 dark:text-gray-400">
@@ -185,7 +185,7 @@ const ChatPage = () => {
 
   if (error && messages.length === 0) {
     return (
-      <div className="h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+      <div className="h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 overflow-hidden">
         <div className="text-center max-w-md mx-auto p-6">
           <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-2">
@@ -199,9 +199,9 @@ const ChatPage = () => {
   }
 
   return (
-    <div className="h-screen flex flex-col bg-gray-50 dark:bg-gray-900">
-      {/* Header */}
-      <header className="bg-white/80 dark:bg-gray-800/80 backdrop-blur border-b border-white/40 dark:border-gray-700/40 p-4">
+    <div className="h-screen flex flex-col bg-gray-50 dark:bg-gray-900 overflow-hidden">
+      {/* Header - Fixed height */}
+      <header className="bg-white/80 dark:bg-gray-800/80 backdrop-blur border-b border-white/40 dark:border-gray-700/40 p-4 flex-shrink-0">
         <div className="max-w-4xl mx-auto flex justify-between items-center">
           <div className="flex items-center gap-3">
             <motion.div
@@ -228,14 +228,14 @@ const ChatPage = () => {
         </div>
       </header>
 
-      {/* Error Banner */}
+      {/* Error Banner - Fixed height when shown */}
       <AnimatePresence>
         {error && (
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-3"
+            className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-3 flex-shrink-0"
           >
             <div className="max-w-4xl mx-auto flex items-center gap-2">
               <AlertCircle className="h-4 w-4 text-red-500" />
@@ -255,8 +255,8 @@ const ChatPage = () => {
         )}
       </AnimatePresence>
 
-      {/* Chat Messages */}
-      <div className="flex-1 overflow-y-auto p-4">
+      {/* Chat Messages - Takes remaining space and scrolls internally */}
+      <div className="flex-1 overflow-y-auto p-4 min-h-0">
         <div className="max-w-4xl mx-auto space-y-2">
           <AnimatePresence>
             {messages.map((msg) => (
@@ -274,15 +274,15 @@ const ChatPage = () => {
         </div>
       </div>
 
-      {/* Input */}
-      <footer className="bg-white/80 dark:bg-gray-800/80 backdrop-blur border-t border-white/40 dark:border-gray-700/40 p-4">
+      {/* Input - Fixed height */}
+      <footer className="bg-white/80 dark:bg-gray-800/80 backdrop-blur border-t border-white/40 dark:border-gray-700/40 p-4 flex-shrink-0">
         <div className="max-w-4xl mx-auto flex gap-4">
           <textarea
             value={inputMessage}
             onChange={(e) => setInputMessage(e.target.value)}
             onKeyPress={handleKeyPress}
             placeholder="Type your message here..."
-            className="flex-1 p-3 rounded-xl resize-none border bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 border-gray-200 dark:border-gray-600 focus:ring-2 focus:ring-purple-500 focus:outline-none"
+            className="flex-1 p-3 rounded-xl resize-none border bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 border-gray-200 dark:border-gray-600 focus:ring-2 focus:ring-purple-500 focus:outline-none max-h-24"
             rows={1}
             disabled={isTyping}
           />

@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import {authService} from "../components/Auth/Auth-service"
+import { useNavigate,useLocation } from "react-router-dom";
 
 const AuthContext = createContext();
 
@@ -12,17 +13,25 @@ export const useAuth = () => {
 };
 
 export const AuthProvider = ({ children }) => {
+  const location = useLocation();
+  const navigate = useNavigate()
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const isLoggedIn = !!user
+
+  useEffect(() => {
+    if (!loading && !isLoggedIn && location.pathname !== "/auth") {
+      navigate("/auth");
+    }
+  }, [loading, isLoggedIn, location.pathname, navigate]);
+
   useEffect(() => {
     const unsubscribe = authService.onAuthStateChanged(async (firebaseUser) => {
       if (firebaseUser) {
-        // Get fresh ID token
+        
         const idToken = await firebaseUser.getIdToken();
-
-        // Sync with backend
         try {
           const response = await fetch("/api/auth/verify", {
             headers: {
@@ -73,6 +82,10 @@ export const AuthProvider = ({ children }) => {
     }
 
     setLoading(false);
+    if (result.success) {
+      // Redirect to the home page after successful sign-up
+      navigate("/profile");
+    }
     return result;
   };
 
@@ -81,7 +94,10 @@ export const AuthProvider = ({ children }) => {
     setError(null);
 
     const result = await authService.signIn(email, password);
-
+    if (result.success) {
+      // Redirect to the home page after successful sign-in
+      navigate("/profile");
+    }
     if (!result.success) {
       setError(result.error);
     }
@@ -95,7 +111,10 @@ export const AuthProvider = ({ children }) => {
     setError(null);
 
     const result = await authService.signInWithGoogle();
-
+    if (result.success) {
+      // Redirect to the home page after successful sign-in
+      navigate("/profile");
+    }
     if (!result.success) {
       setError(result.error);
     }
@@ -109,11 +128,13 @@ export const AuthProvider = ({ children }) => {
     setError(null);
 
     const result = await authService.signOut();
-
+    if (result.success) {
+      // Redirect to the login page after successful sign-out
+      navigate("/auth");
+    }
     if (!result.success) {
       setError(result.error);
     }
-
     setLoading(false);
     return result;
   };

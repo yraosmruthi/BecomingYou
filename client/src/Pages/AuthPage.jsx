@@ -23,7 +23,7 @@ const AuthPage = ({ onLogin }) => {
   const handleAuthSuccess = (user) => {
     toast.success(`Welcome, ${user.displayName || "User"}!`);
     if (onLogin) onLogin(user);
-    navigate("/dashboard");
+    navigate("/profile");
   };
 
   const handleGoogleSignIn = async () => {
@@ -31,7 +31,7 @@ const AuthPage = ({ onLogin }) => {
     if (result.success) {
       toast.success("Signed in with Google");
       handleAuthSuccess(result.user);
-      navigate("/dashboard");
+      navigate("/profile");
     } else {
       toast.error(result.error || "Google sign-in failed");
     }

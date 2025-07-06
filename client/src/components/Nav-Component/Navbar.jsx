@@ -31,11 +31,7 @@ const Navbar = ({ currentRoute, user, onLogout }) => {
   return (
     <nav
       className="backdrop-blur-lg shadow-sm border-b sticky top-0 z-50 transition-colors duration-500 
-        // keep this if you still support dark mode styles
-        
-          bg-gradient-to-br from-black/95 via-gray-900/95 to-black/95 border-gray-800/30"
-          
-      
+        bg-gradient-to-br from-black/95 via-gray-900/95 to-black/95 border-gray-800/30"  
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">

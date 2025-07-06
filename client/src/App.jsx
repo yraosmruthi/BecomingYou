@@ -8,19 +8,25 @@ import Navbar from "./components/Nav-Component/Navbar";
 import HomePage from "./Pages/HomePage";
 import AuthPage from "./Pages/AuthPage";
 import ProfileDashboard from "./pages/ProfileDashboard";
-import ChatPage from "./pages/ChatPage";
+import ChatPage from "./Pages/ChatPage";
 import GoalsPage from "./pages/GoalsPage";
 import { Toaster } from "react-hot-toast";
+import { useNavigate } from "react-router-dom";
 
 const App = () => {
+  const navigate = useNavigate();
   const [user, setUser] = useState(null);
 
   const handleLogin = (userData) => {
     setUser(userData);
+    navigate("/profile");
+
   };
 
   const handleLogout = () => {
     setUser(null);
+    navigate("/auth");
+
   };
 
   return (
