@@ -75,11 +75,11 @@ const FeaturesSection = () => {
               transition={{ delay: index * 0.1 }}
             >
               <Card className="p-6 h-full">
-                <feature.icon className="h-12 w-12 text-gray-200 mb-4" />
+                <feature.icon className="h-12 w-12 text-gray-400 mb-4" />
                 <h3 className="text-xl font-semibold mb-3 text-gray-200">
                   {feature.title}
                 </h3>
-                <p className="text-gray-200">{feature.description}</p>
+                <p className="text-gray-600">{feature.description}</p>
               </Card>
             </motion.div>
           ))}

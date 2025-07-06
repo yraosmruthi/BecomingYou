@@ -1,5 +1,8 @@
 import React, { useState } from "react";
-
+import Button from "../components/Utility-Component/Button";
+import Card from "../components/Utility-Component/Card";
+import GoalCard from "../components/Goal-Component/GoalCard";
+import NewGoalModal from "../components/Goal-Component/NewGoalModal";
 import {
   Target, 
   Plus,
@@ -7,7 +10,7 @@ import {
 
 
 const GoalsPage = () => {
-  const { isDarkMode } = useTheme();
+  
   const [goals, setGoals] = useState([
     {
       id: 1,
@@ -71,13 +74,12 @@ const GoalsPage = () => {
       <div className="flex justify-between items-center mb-8">
         <div>
           <h1
-            className={`text-3xl font-bold mb-2 ${
-              isDarkMode ? "text-white" : "text-gray-800"
-            }`}
+            className="text-3xl font-bold mb-2 
+               text-gray-200"
           >
             Your Goals
           </h1>
-          <p className={isDarkMode ? "text-gray-300" : "text-gray-600"}>
+          <p className="text-gray-500">
             Track your progress and achieve your dreams
           </p>
         </div>
@@ -93,7 +95,7 @@ const GoalsPage = () => {
           <div className="text-3xl font-bold text-purple-600 mb-2">
             {goals.length}
           </div>
-          <div className={isDarkMode ? "text-gray-300" : "text-gray-600"}>
+          <div className= "text-gray-600">
             Total Goals
           </div>
         </Card>
@@ -101,7 +103,7 @@ const GoalsPage = () => {
           <div className="text-3xl font-bold text-green-600 mb-2">
             {completedGoals}
           </div>
-          <div className={isDarkMode ? "text-gray-300" : "text-gray-600"}>
+          <div className= "text-gray-600">
             Completed
           </div>
         </Card>
@@ -109,7 +111,7 @@ const GoalsPage = () => {
           <div className="text-3xl font-bold text-blue-600 mb-2">
             {Math.round(averageProgress)}%
           </div>
-          <div className={isDarkMode ? "text-gray-300" : "text-gray-600"}>
+          <div className= "text-gray-600">
             Average Progress
           </div>
         </Card>

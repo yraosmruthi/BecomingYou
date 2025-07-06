@@ -36,6 +36,10 @@ const goalSchema = new Schema(
       type: Boolean,
       default: false,
     },
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
   },
   {
     timestamps: true,
@@ -45,9 +49,11 @@ const goalSchema = new Schema(
 goalSchema.pre("save", function (next) {
   if (this.progress >= 100) {
     this.completed = true;
+    this.isActive = false;
   }
   next();
 });
+
 
 goalSchema.virtual("isOverdue").get(function () {
   return !this.completed && this.targetDate < new Date();
@@ -61,11 +67,9 @@ goalSchema.virtual("daysLeft").get(function () {
 });
 
 goalSchema.statics.getActiveGoals = function (userId) {
-  return this.find({
-    userId: userId,
-    completed: false,
-  }).sort({ targetDate: 1 });
+  return this.find({ userId, isActive: true }).sort({ targetDate: 1 });
 };
+
 
 const Goal = mongoose.model('Goal', goalSchema);
 module.exports = Goal;

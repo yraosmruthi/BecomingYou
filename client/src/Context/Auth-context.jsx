@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { authService } from "./auth-service";
+import {authService} from "../components/Auth/Auth-service"
 
 const AuthContext = createContext();
 

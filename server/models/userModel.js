@@ -23,7 +23,7 @@ const userSchema = new Schema(
     },
     photoURL: {
       type: String,
-      default: null,
+      default: "https://www.shutterstock.com/image-vector/default-avatar-profile-icon-transparent-600nw-2534623321.jpg",
     },
     emailVerified: {
       type: Boolean,

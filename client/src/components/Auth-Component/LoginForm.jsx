@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import Button from "../Utility-Component/Button";
 import Input from "../Utility-Component/Input";
-import { useAuth } from "../../auth/auth-context";
+import { useAuth } from "../../Context/Auth-context";
 import { User, Eye, EyeOff, AlertCircle } from "lucide-react";
 
 const LoginForm = ({ onSuccess }) => {

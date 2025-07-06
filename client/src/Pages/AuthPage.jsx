@@ -1,26 +1,39 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import LoginForm from "../components/Auth-Component/LoginForm";
 import SignupForm from "../components/Auth-Component/SignupForm";
 import Button from "../components/Utility-Component/Button";
 import Card from "../components/Utility-Component/Card";
-import { useAuth } from "../auth/auth-context";
-import { Heart, AlertCircle } from "lucide-react";
+import { useAuth } from "../Context/Auth-context";
+import { Heart } from "lucide-react";
+import toast from "react-hot-toast";
+import {useNavigate} from "react-router-dom";
 
 const AuthPage = ({ onLogin }) => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("login");
   const { signInWithGoogle, loading, error } = useAuth();
 
-  const handleAuthSuccess = (user) => {
-    if (onLogin) {
-      onLogin(user);
+  useEffect(() => {
+    if (error) {
+      toast.error(error);
     }
+  }, [error]);
+
+  const handleAuthSuccess = (user) => {
+    toast.success(`Welcome, ${user.displayName || "User"}!`);
+    if (onLogin) onLogin(user);
+    navigate("/dashboard");
   };
 
   const handleGoogleSignIn = async () => {
     const result = await signInWithGoogle();
     if (result.success) {
+      toast.success("Signed in with Google");
       handleAuthSuccess(result.user);
+      navigate("/dashboard");
+    } else {
+      toast.error(result.error || "Google sign-in failed");
     }
   };
 

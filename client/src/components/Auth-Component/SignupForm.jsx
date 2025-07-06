@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { User, Eye, EyeOff, AlertCircle, CheckCircle } from "lucide-react";
 import Button from "../Utility-Component/Button";
 import Input from "../Utility-Component/Input";
-import { useAuth } from "../../auth/auth-context";
+import {useAuth} from "../../Context/Auth-context"
 
 const SignupForm = ({ onSuccess }) => {
   const [formData, setFormData] = useState({

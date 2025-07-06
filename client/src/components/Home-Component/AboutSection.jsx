@@ -30,21 +30,21 @@ const AboutSection = () => (
         <div className="grid md:grid-cols-3 gap-8">
           <Card className="p-6 text-center">
             <Heart className="h-12 w-12 text-purple-500 mx-auto mb-4" />
-            <h3 className="font-semibold text-lg mb-2">Empathetic</h3>
+            <h3 className="font-semibold text-lg mb-2 text-gray-200">Empathetic</h3>
             <p className="text-gray-600">
               Understanding and compassionate support when you need it most
             </p>
           </Card>
           <Card className="p-6 text-center">
             <Target className="h-12 w-12 text-blue-500 mx-auto mb-4" />
-            <h3 className="font-semibold text-lg mb-2">Goal-Oriented</h3>
+            <h3 className="font-semibold text-lg mb-2 text-gray-200">Goal-Oriented</h3>
             <p className="text-gray-600">
               Set and track meaningful goals for personal growth
             </p>
           </Card>
           <Card className="p-6 text-center">
             <TrendingUp className="h-12 w-12 text-green-500 mx-auto mb-4" />
-            <h3 className="font-semibold text-lg mb-2">Progress Tracking</h3>
+            <h3 className="font-semibold text-lg mb-2 text-gray-200">Progress Tracking</h3>
             <p className="text-gray-600">
               Visualize your journey with detailed mood and progress analytics
             </p>

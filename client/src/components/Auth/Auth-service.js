@@ -1,3 +1,15 @@
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signInWithPopup,
+  signOut,
+  updateProfile,
+  sendPasswordResetEmail,
+  sendEmailVerification,
+  onAuthStateChanged, // ✅ ← THIS IS MISSING
+} from "firebase/auth";
+import { auth, googleProvider } from "../Auth/Firebase-config";
+const endpoint = "http://localhost:3000";
 class AuthService {
   constructor() {
     this.auth = auth;
@@ -55,7 +67,7 @@ class AuthService {
       const idToken = await user.getIdToken();
 
       // Send user data to backend
-      const response = await fetch("/api/auth/register", {
+      const response = await fetch("http://localhost:3000/api/auth/register", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -105,7 +117,7 @@ class AuthService {
       const idToken = await user.getIdToken();
 
       // Verify with backend and get user data
-      const response = await fetch("/api/auth/login", {
+      const response = await fetch("http://localhost:3000/api/auth/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -144,7 +156,7 @@ class AuthService {
       const idToken = await user.getIdToken();
 
       // Send to backend
-      const response = await fetch("/api/auth/google", {
+      const response = await fetch("http://localhost:3000/api/auth/google", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
