@@ -9,7 +9,6 @@ import {
   onAuthStateChanged, // ✅ ← THIS IS MISSING
 } from "firebase/auth";
 import { auth, googleProvider } from "../Auth/Firebase-config";
-const endpoint = "http://localhost:3000";
 class AuthService {
   constructor() {
     this.auth = auth;

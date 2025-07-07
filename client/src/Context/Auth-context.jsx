@@ -33,11 +33,14 @@ export const AuthProvider = ({ children }) => {
         
         const idToken = await firebaseUser.getIdToken();
         try {
-          const response = await fetch("/api/auth/verify", {
-            headers: {
-              Authorization: `Bearer ${idToken}`,
-            },
-          });
+          const response = await fetch(
+            "http://localhost:3000/api/auth/verify",
+            {
+              headers: {
+                Authorization: `Bearer ${idToken}`,
+              },
+            }
+          );
 
           if (response.ok) {
             const backendData = await response.json();
