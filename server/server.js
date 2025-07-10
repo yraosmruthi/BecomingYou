@@ -8,11 +8,14 @@ require("dotenv").config();
 
 const authRoutes = require("./routes/authRoute")
 const chatRoutes = require("./routes/chatRoute");
+const goalRoutes = require("./routes/goalRoute");
+const moodRoutes = require("./routes/moodRoute");
+const feedbackRoutes = require("./routes/feedbackRoute");
 
 app.use(helmet());
 app.use(
   cors({
-    origin:  "http://localhost:5173",
+    origin: "http://localhost:5173",
     credentials: true,
   })
 );
@@ -29,9 +32,9 @@ const limiter = rateLimit({
 app.use('/api/', limiter);
 app.use("/api/auth", authRoutes);
 app.use("/api/chat", chatRoutes);
-// app.use("/api/mood", moodRoutes);
-// app.use("/api/goals", goalRoutes);
-// app.use("/api/feedback", feedbackRoutes);
+app.use("/api/mood", moodRoutes);
+app.use("/api/goals", goalRoutes);
+app.use("/api/feedback", feedbackRoutes);
 
 
 app.get("/health", (req, res) => {

@@ -104,6 +104,14 @@ const ChatPage = () => {
     setError(null);
 
     try {
+
+      console.log("Payload being sent:", {
+        sessionId: currentSessionId,
+        userId: user.uid,
+        message: inputMessage.trim(),
+        contextData,
+      });
+      
       // Send message to backend
       const response = await chatAPI.sendMessage(
         currentSessionId,
@@ -157,7 +165,9 @@ const ChatPage = () => {
 
   const handleFeedbackSubmit = async (feedbackData) => {
     try {
-      await chatAPI.submitFeedback(currentSessionId, user.uid, feedbackData);
+      // The FeedbackModal will handle the actual submission to the backend
+      // via the feedbackService, so we just need to handle the success case
+      console.log("Feedback submitted successfully:", feedbackData);
 
       // Optionally redirect or show success message
       // navigate('/dashboard');
@@ -300,11 +310,13 @@ const ChatPage = () => {
         </div>
       </footer>
 
-      {/* Feedback Modal */}
+      {/* Feedback Modal - Now properly connected to backend */}
       <FeedbackModal
         isOpen={showFeedback}
         onClose={() => setShowFeedback(false)}
         onSubmit={handleFeedbackSubmit}
+        sessionId={currentSessionId}
+        userId={user?.uid}
       />
     </div>
   );

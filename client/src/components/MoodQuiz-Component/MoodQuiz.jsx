@@ -1,10 +1,12 @@
 import  { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import {useAuth} from "../../Context/Auth-context"
 
 import Button from "../Utility-Component/Button";
 import Modal from "../Utility-Component/Modal";
 
 const MoodQuiz = ({ isOpen, onClose, onSubmit }) => {
+  const { user, apiCall } = useAuth();
   const [selectedMood, setSelectedMood] = useState(null);
   const [note, setNote] = useState("");
 
@@ -40,13 +42,40 @@ const MoodQuiz = ({ isOpen, onClose, onSubmit }) => {
       color: "text-red-500 dark:text-red-400",
     },
   ];
+  const handleSubmit = async () => {
+    if (selectedMood === null) return;
 
-  const handleSubmit = () => {
-    if (selectedMood !== null) {
-      onSubmit({ mood: selectedMood, note, date: new Date().toISOString() });
-      onClose();
+    try {
+      const response = await apiCall("http://localhost:3000/api/mood", {
+        method: "POST",
+        body: JSON.stringify({
+          mood: selectedMood,
+          note: note.trim(),
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to save mood entry");
+      }
+
+      // Call the parent component's onSubmit function with the correct format
+      if (onSubmit) {
+        // Pass the mood data in the format expected by ProfileDashboard
+        onSubmit({
+          mood: selectedMood,
+          note: note.trim(),
+        });
+      }
+
+      // Reset form and close modal
       setSelectedMood(null);
       setNote("");
+      onClose();
+    } catch (error) {
+      console.error("Error saving mood entry:", error);
+      alert("Failed to save mood entry. Please try again.");
     }
   };
 

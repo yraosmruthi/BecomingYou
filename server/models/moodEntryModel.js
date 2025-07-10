@@ -167,5 +167,7 @@ moodEntrySchema.methods.updateMood = function (moodData) {
   return this.save();
 };
 
-const MoodEntry = mongoose.model('MoodEntry', moodEntrySchema);
+const MoodEntry =
+  mongoose.models.MoodEntry || mongoose.model("MoodEntry", moodEntrySchema);
+
 module.exports = MoodEntry 

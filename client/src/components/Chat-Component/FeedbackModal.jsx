@@ -1,240 +1,233 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Star, Heart, ThumbsUp } from "lucide-react";
+import { Star, Heart, ThumbsUp, Loader2, AlertCircle } from "lucide-react";
 import Button from "../Utility-Component/Button";
 import Modal from "../Utility-Component/Modal";
+import feedbackService from "../../services/feedbackService";
 
-const FeedbackModal = ({ isOpen, onClose, onSubmit }) => {
-  const [rating, setRating] = useState(0);
-  const [feedback, setFeedback] = useState("");
-  const [currentMood, setCurrentMood] = useState(null);
+const FeedbackModal = ({
+  isOpen,
+  onClose,
+  onSubmit,
+  sessionId,
+  userId,
+  existingFeedback = null, // For editing existing feedback
+}) => {
+  const [rating, setRating] = useState(existingFeedback?.rating || 0);
+  const [comment, setComment] = useState(existingFeedback?.comment || "");
+  const [moodAfterChat, setMoodAfterChat] = useState(
+    existingFeedback?.moodAfterChat || ""
+  );
+  const [hoveredRating, setHoveredRating] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState("");
 
-  const moods = [
-    {
-      emoji: "😊",
-      label: "Much Better",
-      value: 5,
-      color:
-        "bg-green-50 border-green-200 dark:bg-green-900/30 dark:border-green-400",
-    },
-    {
-      emoji: "🙂",
-      label: "Better",
-      value: 4,
-      color:
-        "bg-blue-50 border-blue-200 dark:bg-blue-900/30 dark:border-blue-400",
-    },
-    {
-      emoji: "😐",
-      label: "Same",
-      value: 3,
-      color:
-        "bg-gray-50 border-gray-200 dark:bg-gray-900/30 dark:border-gray-400",
-    },
-    {
-      emoji: "🙁",
-      label: "Worse",
-      value: 2,
-      color:
-        "bg-yellow-50 border-yellow-200 dark:bg-yellow-900/30 dark:border-yellow-400",
-    },
-    {
-      emoji: "😢",
-      label: "Much Worse",
-      value: 1,
-      color: "bg-red-50 border-red-200 dark:bg-red-900/30 dark:border-red-400",
-    },
+  // Mood options
+  const moodOptions = [
+    { value: "happy", label: "Happy", emoji: "😊" },
+    { value: "satisfied", label: "Satisfied", emoji: "😌" },
+    { value: "neutral", label: "Neutral", emoji: "😐" },
+    { value: "disappointed", label: "Disappointed", emoji: "😞" },
+    { value: "frustrated", label: "Frustrated", emoji: "😤" },
   ];
 
-  const handleSubmit = async () => {
-    if (!rating || !currentMood) return;
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+
+    if (rating === 0) {
+      setError("Please select a rating");
+      return;
+    }
 
     setIsSubmitting(true);
 
     try {
-      await onSubmit({
+      const feedbackData = {
+        sessionId,
+        userId,
         rating,
-        comment: feedback,
-        moodAfterChat: currentMood,
-      });
+        comment,
+        moodAfterChat,
+      };
 
-      // Reset form
-      setRating(0);
-      setFeedback("");
-      setCurrentMood(null);
+      let result;
 
-      // Close modal after brief delay
-      setTimeout(() => {
-        onClose();
-      }, 500);
-    } catch (error) {
-      console.error("Error submitting feedback:", error);
+      if (existingFeedback) {
+        // Update existing feedback
+        result = await feedbackService.updateFeedback(
+          existingFeedback._id,
+          userId,
+          { rating, comment, moodAfterChat }
+        );
+      } else {
+        // Submit new feedback
+        result = await feedbackService.submitFeedback(feedbackData);
+      }
+
+      if (result.success) {
+        onSubmit?.(result.data);
+        handleClose();
+      } else {
+        setError(result.message || "Failed to submit feedback");
+      }
+    } catch (err) {
+      setError(err.message || "An error occurred while submitting feedback");
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleClose = () => {
-    setRating(0);
-    setFeedback("");
-    setCurrentMood(null);
-    onClose();
+    if (!isSubmitting) {
+      setRating(existingFeedback?.rating || 0);
+      setComment(existingFeedback?.comment || "");
+      setMoodAfterChat(existingFeedback?.moodAfterChat || "");
+      setError("");
+      onClose();
+    }
+  };
+
+  const renderStars = () => {
+    return Array.from({ length: 5 }, (_, index) => {
+      const starValue = index + 1;
+      const isActive = starValue <= (hoveredRating || rating);
+
+      return (
+        <motion.button
+          key={starValue}
+          type="button"
+          onClick={() => setRating(starValue)}
+          onMouseEnter={() => setHoveredRating(starValue)}
+          onMouseLeave={() => setHoveredRating(0)}
+          className={`p-1 transition-colors ${
+            isActive ? "text-yellow-400" : "text-gray-300"
+          }`}
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+          disabled={isSubmitting}
+        >
+          <Star className="w-8 h-8 fill-current" />
+        </motion.button>
+      );
+    });
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} title="Session Feedback">
-      <div className="p-6 space-y-6">
-        {/* Session Rating */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-        >
-          <h4 className="font-medium mb-4 text-gray-800 dark:text-white flex items-center gap-2">
-            <ThumbsUp className="h-5 w-5 text-purple-500" />
-            How helpful was this conversation?
-          </h4>
-          <div className="flex space-x-2 justify-center">
-            {[1, 2, 3, 4, 5].map((star) => (
-              <motion.button
-                key={star}
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-                onClick={() => setRating(star)}
-                className={`p-2 rounded-full transition-all ${
-                  star <= rating
-                    ? "text-yellow-400 bg-yellow-50 dark:bg-yellow-900/30"
-                    : "text-gray-300 dark:text-gray-600 hover:text-yellow-300 hover:bg-gray-50 dark:hover:bg-gray-800"
-                }`}
-              >
-                <Star className="h-6 w-6 fill-current" />
-              </motion.button>
-            ))}
-          </div>
-          <p className="text-center text-sm text-gray-500 dark:text-gray-400 mt-2">
-            {rating > 0 && (
-              <span>
-                {rating === 1 && "Not helpful"}
-                {rating === 2 && "Slightly helpful"}
-                {rating === 3 && "Moderately helpful"}
-                {rating === 4 && "Very helpful"}
-                {rating === 5 && "Extremely helpful"}
-              </span>
-            )}
-          </p>
-        </motion.div>
+    <Modal isOpen={isOpen} onClose={handleClose} size="md">
+      <div className="p-6">
+        <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">
+          {existingFeedback
+            ? "Edit Your Feedback"
+            : "How was your chat experience?"}
+        </h2>
 
-        {/* Mood After Chat */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-        >
-          <h4 className="font-medium mb-4 text-gray-800 dark:text-white flex items-center gap-2">
-            <Heart className="h-5 w-5 text-red-500" />
-            How are you feeling now?
-          </h4>
-          <div className="grid grid-cols-5 gap-2">
-            {moods.map((mood, index) => (
-              <motion.button
-                key={mood.value}
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.05 * index }}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setCurrentMood(mood.value)}
-                className={`p-3 rounded-lg border-2 transition-all ${
-                  currentMood === mood.value
-                    ? `${mood.color} border-2 shadow-md`
-                    : "border-gray-200 dark:border-gray-600 hover:border-purple-300 dark:hover:border-purple-400 hover:shadow-sm"
-                }`}
-              >
-                <motion.div
-                  className="text-2xl mb-1"
-                  animate={
-                    currentMood === mood.value ? { scale: [1, 1.2, 1] } : {}
-                  }
-                  transition={{ duration: 0.3 }}
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-red-700"
+          >
+            <AlertCircle className="w-5 h-5" />
+            <span>{error}</span>
+          </motion.div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Rating Section */}
+          <div className="text-center">
+            <label className="block text-sm font-medium text-gray-700 mb-3">
+              Rate your experience
+            </label>
+            <div className="flex justify-center gap-1 mb-2">
+              {renderStars()}
+            </div>
+            <p className="text-sm text-gray-500">
+              {rating > 0 && (
+                <span>
+                  {rating === 1 && "Poor"}
+                  {rating === 2 && "Fair"}
+                  {rating === 3 && "Good"}
+                  {rating === 4 && "Very Good"}
+                  {rating === 5 && "Excellent"}
+                </span>
+              )}
+            </p>
+          </div>
+
+          {/* Mood Section */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-3">
+              How do you feel after this chat?
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {moodOptions.map((mood) => (
+                <motion.button
+                  key={mood.value}
+                  type="button"
+                  onClick={() => setMoodAfterChat(mood.value)}
+                  className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                    moodAfterChat === mood.value
+                      ? "bg-blue-500 text-white"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  }`}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  disabled={isSubmitting}
                 >
-                  {mood.emoji}
-                </motion.div>
-                <div className="text-xs text-gray-700 dark:text-gray-300 font-medium">
+                  <span className="mr-2">{mood.emoji}</span>
                   {mood.label}
-                </div>
-              </motion.button>
-            ))}
+                </motion.button>
+              ))}
+            </div>
           </div>
-        </motion.div>
 
-        {/* Additional Comments */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-        >
-          <h4 className="font-medium mb-3 text-gray-800 dark:text-white">
-            Any additional thoughts? (Optional)
-          </h4>
-          <textarea
-            value={feedback}
-            onChange={(e) => setFeedback(e.target.value)}
-            placeholder="Share your thoughts about this session..."
-            className="w-full p-3 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 rounded-xl resize-none h-20 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
-            rows={3}
-          />
-        </motion.div>
+          {/* Comment Section */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Additional comments (optional)
+            </label>
+            <textarea
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+              placeholder="Share any specific feedback or suggestions..."
+              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+              rows={4}
+              disabled={isSubmitting}
+            />
+          </div>
 
-        {/* Action Buttons */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-          className="flex space-x-3 pt-4"
-        >
-          <Button
-            variant="secondary"
-            onClick={handleClose}
-            className="flex-1"
-            disabled={isSubmitting}
-          >
-            Skip for Now
-          </Button>
-          <Button
-            onClick={handleSubmit}
-            className="flex-1"
-            disabled={!rating || !currentMood || isSubmitting}
-          >
-            {isSubmitting ? (
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                Submitting...
-              </div>
-            ) : (
-              "Submit Feedback"
-            )}
-          </Button>
-        </motion.div>
-
-        {/* Progress Indicator */}
-        <div className="flex justify-center space-x-2 pt-2">
-          <div
-            className={`w-2 h-2 rounded-full transition-all ${
-              rating > 0 ? "bg-purple-500" : "bg-gray-300"
-            }`}
-          />
-          <div
-            className={`w-2 h-2 rounded-full transition-all ${
-              currentMood ? "bg-purple-500" : "bg-gray-300"
-            }`}
-          />
-          <div
-            className={`w-2 h-2 rounded-full transition-all ${
-              feedback.trim() ? "bg-purple-500" : "bg-gray-300"
-            }`}
-          />
-        </div>
+          {/* Action Buttons */}
+          <div className="flex gap-3 pt-4">
+            <Button
+              type="button"
+              onClick={handleClose}
+              variant="secondary"
+              className="flex-1"
+              disabled={isSubmitting}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              variant="primary"
+              className="flex-1"
+              disabled={isSubmitting || rating === 0}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  {existingFeedback ? "Updating..." : "Submitting..."}
+                </>
+              ) : (
+                <>
+                  <Heart className="w-4 h-4 mr-2" />
+                  {existingFeedback ? "Update Feedback" : "Submit Feedback"}
+                </>
+              )}
+            </Button>
+          </div>
+        </form>
       </div>
     </Modal>
   );
