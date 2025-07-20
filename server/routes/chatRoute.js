@@ -1,4 +1,4 @@
-// routes/chatRoute.js - Fixed version with JSON parsing fix
+// routes/chatRoute.js - Updated with chat summary integration
 const express = require("express");
 const router = express.Router();
 const verifyFirebaseToken = require("../middlewares/firebase-auth");
@@ -27,7 +27,6 @@ const chatLimiter = rateLimit({
 
 // Helper function to extract JSON from markdown code blocks
 const extractJsonFromMarkdown = (text) => {
-  // Remove markdown code blocks if present
   const cleanText = text
     .replace(/```json\n?/g, "")
     .replace(/```\n?/g, "")
@@ -35,13 +34,14 @@ const extractJsonFromMarkdown = (text) => {
   return cleanText;
 };
 
+// Enhanced context route with chat summaries
 router.get("/context/:userId", verifyFirebaseToken, async (req, res) => {
   try {
     const { userId } = req.params;
     if (req.user.uid !== userId)
       return res.status(403).json({ error: "Unauthorized" });
 
-    const [moodLogs, goals, recentSessions, feedbackHistory] =
+    const [moodLogs, goals, recentSessions, feedbackHistory, chatSummaries] =
       await Promise.all([
         MoodEntry.find({ userId }).sort({ date: -1 }).limit(7),
         Goal.find({ userId, isActive: true }),
@@ -50,6 +50,15 @@ router.get("/context/:userId", verifyFirebaseToken, async (req, res) => {
           .limit(3)
           .populate("summary"),
         Feedback.find({ userId }).sort({ submittedAt: -1 }).limit(10),
+        // Fetch last 5 chat summaries for context
+        ChatSummary.find({
+          chatSession: {
+            $in: await ChatSession.find({ userId }).distinct("_id"),
+          },
+        })
+          .sort({ createdAt: -1 })
+          .limit(5)
+          .select("summaryText keyTopics emotionalTone createdAt"),
       ]);
 
     const recentMood =
@@ -73,6 +82,7 @@ router.get("/context/:userId", verifyFirebaseToken, async (req, res) => {
       goals,
       feedbackHistory,
       userName: req.user.name || null,
+      chatSummaries: chatSummaries || [], // Include chat summaries
     };
 
     res.json({ success: true, data: contextData });
@@ -114,23 +124,24 @@ router.post("/message", verifyFirebaseToken, async (req, res) => {
     if (!chatSession || chatSession.userId.toString() !== userId) {
       return res.status(404).json({ error: "Session not found" });
     }
-    
 
     const systemPrompt = generateSystemPrompt(contextData);
 
-    // Get last 6 messages for context (can adjust this number)
+    // Get last 6 messages for context
     const recentMessages = chatSession.messages.slice(-6).map((msg) => ({
       role: msg.sender === "user" ? "user" : "model",
       parts: [{ text: msg.text }],
     }));
 
-    // Prepare content for Gemini API
+    // Prepare content for Gemini API with adjusted settings for concise responses
     const model = genAI.getGenerativeModel({
       model: "gemini-1.5-flash",
       systemInstruction: systemPrompt,
       generationConfig: {
-        maxOutputTokens: 200,
+        maxOutputTokens: 150, // Reduced from 200 to encourage shorter responses
         temperature: 0.7,
+        topP: 0.8,
+        topK: 40,
       },
     });
 
@@ -143,7 +154,7 @@ router.post("/message", verifyFirebaseToken, async (req, res) => {
         },
       ],
     });
-    
+
     const response = await result.response;
     const aiReply = response.text();
 
@@ -167,12 +178,10 @@ router.post("/message", verifyFirebaseToken, async (req, res) => {
 
     return res.status(500).json({
       error: "AI processing failed",
-      message: error.message
-          
+      message: error.message,
     });
   }
 });
-
 
 router.put("/session/:sessionId/end", verifyFirebaseToken, async (req, res) => {
   try {
@@ -187,7 +196,7 @@ router.put("/session/:sessionId/end", verifyFirebaseToken, async (req, res) => {
       const model = genAI.getGenerativeModel({
         model: "gemini-1.5-flash",
         generationConfig: {
-          temperature: 0.3, // Lower temperature for more consistent JSON output
+          temperature: 0.3,
         },
       });
 
@@ -195,39 +204,25 @@ router.put("/session/:sessionId/end", verifyFirebaseToken, async (req, res) => {
         .map((msg) => `${msg.sender === "user" ? "User" : "AI"}: ${msg.text}`)
         .join("\n");
 
-      const summaryPrompt = `Please provide a concise summary of this mental health support conversation. Focus on:
+      const summaryPrompt = `Analyze this mental health support conversation and provide a concise summary. Focus on:
 1. Main topics discussed
-2. User's emotional state
-3. Key concerns or issues
-4. Coping strategies mentioned
+2. User's emotional state and key concerns
+3. Advice/strategies provided
+4. User's progress or insights
 5. Overall emotional tone
 
 Conversation:
 ${conversation}
 
-Return ONLY a valid JSON object with this exact structure (no markdown formatting).
-For emotionalTone, carefully analyze the user's emotional state and choose the MOST ACCURATE emotion from these options:
-
-Basic: "positive", "negative", "neutral", "mixed"
-Anxiety/Stress: "anxious", "worried", "stressed", "overwhelmed", "panicked", "nervous", "tense"
-Depression/Sadness: "depressed", "sad", "melancholy", "grief", "disappointed", "hopeless", "empty", "numb"
-Anger/Frustration: "angry", "frustrated", "irritated", "resentful", "bitter", "annoyed"
-Fear/Insecurity: "fearful", "insecure", "vulnerable", "uncertain", "doubtful", "apprehensive"
-Positive/Hope: "hopeful", "optimistic", "grateful", "relieved", "content", "peaceful", "joyful", "excited", "motivated", "confident", "proud", "accomplished"
-Calm/Stable: "calm", "stable", "centered", "balanced", "serene"
-Social: "lonely", "isolated", "rejected", "misunderstood", "supported", "connected", "loved"
-Energy: "energetic", "tired", "exhausted", "drained", "burnout", "apathetic", "inspired"
-Clarity: "confused", "conflicted", "indecisive", "clear", "focused", "determined"
-Recovery: "traumatized", "healing", "recovering", "resilient", "empowered"
-Self-Worth: "worthless", "inadequate", "guilty", "shameful", "self-critical", "self-compassionate", "accepting"
-Crisis: "crisis", "suicidal", "self-harm", "dangerous"
-Growth: "breakthrough", "enlightened", "transformed", "growing", "learning"
+Return ONLY a valid JSON object with this exact structure (no markdown formatting):
 
 {
-  "summaryText": "Brief summary of the conversation",
+  "summaryText": "Brief summary focusing on user's progress and key insights",
   "keyTopics": ["topic1", "topic2", "topic3"],
-  "emotionalTone": "most accurate emotion from the list above"
-}`;
+  "emotionalTone": "most accurate emotion from the approved list"
+}
+
+For emotionalTone, choose the MOST ACCURATE emotion from: positive, negative, neutral, mixed, anxious, worried, stressed, overwhelmed, panicked, nervous, tense, depressed, sad, melancholy, grief, disappointed, hopeless, empty, numb, angry, frustrated, irritated, resentful, bitter, annoyed, fearful, insecure, vulnerable, uncertain, doubtful, apprehensive, hopeful, optimistic, grateful, relieved, content, peaceful, joyful, excited, motivated, confident, proud, accomplished, calm, stable, centered, balanced, serene, lonely, isolated, rejected, misunderstood, supported, connected, loved, energetic, tired, exhausted, drained, burnout, apathetic, inspired, confused, conflicted, indecisive, clear, focused, determined, traumatized, healing, recovering, resilient, empowered, worthless, inadequate, guilty, shameful, self-critical, self-compassionate, accepting, crisis, suicidal, self-harm, dangerous, breakthrough, enlightened, transformed, growing, learning`;
 
       try {
         const summaryResult = await model.generateContent({
@@ -242,7 +237,6 @@ Growth: "breakthrough", "enlightened", "transformed", "growing", "learning"
         const rawSummaryText = summaryResult.response.text();
         console.log("Raw summary response:", rawSummaryText);
 
-        // Clean the response text to extract JSON
         const cleanJsonText = extractJsonFromMarkdown(rawSummaryText);
         console.log("Cleaned JSON text:", cleanJsonText);
 
@@ -251,7 +245,6 @@ Growth: "breakthrough", "enlightened", "transformed", "growing", "learning"
           summaryData = JSON.parse(cleanJsonText);
         } catch (parseError) {
           console.error("JSON parse error:", parseError);
-          // Fallback summary if JSON parsing fails
           summaryData = {
             summaryText: "Chat session completed - summary generation failed",
             keyTopics: ["general conversation"],
@@ -259,14 +252,12 @@ Growth: "breakthrough", "enlightened", "transformed", "growing", "learning"
           };
         }
 
-        // Validate the parsed data has required fields and enum values
+        // Validate emotional tone
         const validEmotionalTones = [
-          // Basic Emotions
           "positive",
           "negative",
           "neutral",
           "mixed",
-          // Anxiety & Stress Related
           "anxious",
           "worried",
           "stressed",
@@ -274,7 +265,6 @@ Growth: "breakthrough", "enlightened", "transformed", "growing", "learning"
           "panicked",
           "nervous",
           "tense",
-          // Depression & Sadness Related
           "depressed",
           "sad",
           "melancholy",
@@ -283,21 +273,18 @@ Growth: "breakthrough", "enlightened", "transformed", "growing", "learning"
           "hopeless",
           "empty",
           "numb",
-          // Anger & Frustration Related
           "angry",
           "frustrated",
           "irritated",
           "resentful",
           "bitter",
           "annoyed",
-          // Fear & Insecurity Related
           "fearful",
           "insecure",
           "vulnerable",
           "uncertain",
           "doubtful",
           "apprehensive",
-          // Positive & Hope Related
           "hopeful",
           "optimistic",
           "grateful",
@@ -310,13 +297,11 @@ Growth: "breakthrough", "enlightened", "transformed", "growing", "learning"
           "confident",
           "proud",
           "accomplished",
-          // Calm & Stable
           "calm",
           "stable",
           "centered",
           "balanced",
           "serene",
-          // Social & Relationship Related
           "lonely",
           "isolated",
           "rejected",
@@ -324,7 +309,6 @@ Growth: "breakthrough", "enlightened", "transformed", "growing", "learning"
           "supported",
           "connected",
           "loved",
-          // Energy & Motivation Related
           "energetic",
           "tired",
           "exhausted",
@@ -332,20 +316,17 @@ Growth: "breakthrough", "enlightened", "transformed", "growing", "learning"
           "burnout",
           "apathetic",
           "inspired",
-          // Confusion & Clarity Related
           "confused",
           "conflicted",
           "indecisive",
           "clear",
           "focused",
           "determined",
-          // Trauma & Recovery Related
           "traumatized",
           "healing",
           "recovering",
           "resilient",
           "empowered",
-          // Self-Worth Related
           "worthless",
           "inadequate",
           "guilty",
@@ -353,12 +334,10 @@ Growth: "breakthrough", "enlightened", "transformed", "growing", "learning"
           "self-critical",
           "self-compassionate",
           "accepting",
-          // Crisis & Emergency Related
           "crisis",
           "suicidal",
           "self-harm",
           "dangerous",
-          // Breakthrough & Progress Related
           "breakthrough",
           "enlightened",
           "transformed",
@@ -401,7 +380,6 @@ Growth: "breakthrough", "enlightened", "transformed", "growing", "learning"
         console.log("Summary saved successfully:", summaryData);
       } catch (summaryError) {
         console.error("Error summarizing chat:", summaryError);
-        // Create a basic summary even if AI summarization fails
         const basicSummary = new ChatSummary({
           chatSession: chatSession._id,
           summaryText: "Chat session completed - automatic summary unavailable",

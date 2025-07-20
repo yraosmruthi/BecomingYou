@@ -4,10 +4,14 @@ import ChatMessage from "../components/Chat-Component/ChatMessage";
 import FeedbackModal from "../components/Chat-Component/FeedbackModal";
 import { Heart, Send, Loader2, AlertCircle } from "lucide-react";
 import Button from "../components/Utility-Component/Button";
-import { useAuth } from "../Context/Auth-context"; // Assuming you have an auth hook
+import { useAuth } from "../Context/Auth-context";
 import { chatAPI } from "../services/chatAPI";
+import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast"
+
 
 const ChatPage = () => {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState("");
@@ -40,12 +44,12 @@ const ChatPage = () => {
       setIsLoading(true);
       setError(null);
 
-      // Fetch user context data
+      // Fetch user context data first
       const context = await chatAPI.getUserContext(user.uid);
       setContextData(context);
 
       // Start new chat session
-      const sessionData = await chatAPI.startChatSession(user.uid, context);
+      const sessionData = await chatAPI.startChatSession(user.uid);
       setCurrentSessionId(sessionData.sessionId);
 
       // Set initial AI greeting with personalized context
@@ -65,15 +69,19 @@ const ChatPage = () => {
   };
 
   const generatePersonalizedGreeting = (context) => {
+    if (!context) {
+      return "Hello! I'm here to listen and support you. How are you feeling today?";
+    }
+
     const { recentMood, previousSummary, goals } = context;
 
     let greeting = "Hello! I'm here to listen and support you. ";
 
-    if (recentMood) {
+    if (recentMood?.dominantMood) {
       greeting += `I see you've been feeling ${recentMood.dominantMood} lately. `;
     }
 
-    if (previousSummary) {
+    if (previousSummary?.keyTopics?.length > 0) {
       greeting += `Last time we talked about ${previousSummary.keyTopics.join(
         ", "
       )}. `;
@@ -89,11 +97,12 @@ const ChatPage = () => {
   };
 
   const sendMessage = async () => {
-    if (!inputMessage.trim() || isTyping) return;
+    if (!inputMessage.trim() || isTyping || !currentSessionId) return;
 
+    const messageText = inputMessage.trim();
     const userMessage = {
       id: Date.now(),
-      text: inputMessage.trim(),
+      text: messageText,
       isUser: true,
       timestamp: new Date(),
     };
@@ -104,25 +113,32 @@ const ChatPage = () => {
     setError(null);
 
     try {
-
-      console.log("Payload being sent:", {
+      console.log("Sending message payload:", {
         sessionId: currentSessionId,
         userId: user.uid,
-        message: inputMessage.trim(),
+        message: messageText,
         contextData,
       });
-      
+
       // Send message to backend
       const response = await chatAPI.sendMessage(
         currentSessionId,
         user.uid,
-        inputMessage.trim(),
+        messageText,
         contextData
       );
 
+      // Handle the response structure
+      const aiResponseText =
+        response.data?.aiResponse || response.aiResponse || response.message;
+
+      if (!aiResponseText) {
+        throw new Error("No AI response received");
+      }
+
       const aiMessage = {
         id: Date.now() + 1,
-        text: response.aiResponse, // This should match your backend response
+        text: aiResponseText,
         isUser: false,
         timestamp: new Date(),
       };
@@ -155,31 +171,36 @@ const ChatPage = () => {
 
   const handleEndSession = async () => {
     try {
-      await chatAPI.endChatSession(currentSessionId);
+      if (currentSessionId) {
+        await chatAPI.endChatSession(currentSessionId);
+      }
       setShowFeedback(true);
     } catch (err) {
       console.error("Error ending session:", err);
       setShowFeedback(true); // Still show feedback modal
     }
   };
+  
 
   const handleFeedbackSubmit = async (feedbackData) => {
     try {
-      // The FeedbackModal will handle the actual submission to the backend
-      // via the feedbackService, so we just need to handle the success case
-      console.log("Feedback submitted successfully:", feedbackData);
+      if (currentSessionId) {
+        await chatAPI.submitFeedback(currentSessionId, user.uid, feedbackData);
+      }
+      toast.success("Feedback submitted successfully:", feedbackData);
 
-      // Optionally redirect or show success message
-      // navigate('/dashboard');
+      navigate("/profile"); // ✅ Redirect here after submitting feedback
     } catch (err) {
       console.error("Error submitting feedback:", err);
     }
   };
+  
 
   const retryConnection = () => {
     initializeChatSession();
   };
 
+  // Loading state
   if (isLoading) {
     return (
       <div className="h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 overflow-hidden">
@@ -193,6 +214,7 @@ const ChatPage = () => {
     );
   }
 
+  // Error state (only for initialization errors)
   if (error && messages.length === 0) {
     return (
       <div className="h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 overflow-hidden">
@@ -226,7 +248,7 @@ const ChatPage = () => {
                 AI Support Companion
               </h2>
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                {contextData?.recentMood
+                {contextData?.recentMood?.dominantMood
                   ? `Personalized for your ${contextData.recentMood.dominantMood} mood`
                   : "Always here to listen"}
               </p>
@@ -298,7 +320,7 @@ const ChatPage = () => {
           />
           <Button
             onClick={sendMessage}
-            disabled={!inputMessage.trim() || isTyping}
+            disabled={!inputMessage.trim() || isTyping || !currentSessionId}
             className="relative"
           >
             {isTyping ? (
@@ -310,7 +332,7 @@ const ChatPage = () => {
         </div>
       </footer>
 
-      {/* Feedback Modal - Now properly connected to backend */}
+      {/* Feedback Modal */}
       <FeedbackModal
         isOpen={showFeedback}
         onClose={() => setShowFeedback(false)}

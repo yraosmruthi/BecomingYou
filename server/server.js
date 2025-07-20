@@ -12,6 +12,7 @@ const goalRoutes = require("./routes/goalRoute");
 const moodRoutes = require("./routes/moodRoute");
 const feedbackRoutes = require("./routes/feedbackRoute");
 
+
 app.use(helmet());
 app.use(
   cors({
@@ -35,7 +36,6 @@ app.use("/api/chat", chatRoutes);
 app.use("/api/mood", moodRoutes);
 app.use("/api/goals", goalRoutes);
 app.use("/api/feedback", feedbackRoutes);
-
 
 app.get("/health", (req, res) => {
   res.json({ status: "OK", timestamp: new Date().toISOString() });

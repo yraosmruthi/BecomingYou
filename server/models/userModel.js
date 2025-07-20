@@ -23,7 +23,8 @@ const userSchema = new Schema(
     },
     photoURL: {
       type: String,
-      default: "https://www.shutterstock.com/image-vector/default-avatar-profile-icon-transparent-600nw-2534623321.jpg",
+      default:
+        "https://www.shutterstock.com/image-vector/default-avatar-profile-icon-transparent-600nw-2534623321.jpg",
     },
     emailVerified: {
       type: Boolean,
@@ -35,11 +36,27 @@ const userSchema = new Schema(
       default: "email",
     },
     profile: {
-      firstName: { type: String },
-      lastName: { type: String },
+      firstName: { type: String, trim: true },
+      lastName: { type: String, trim: true },
+      bio: { type: String, maxlength: 500 },
       dateOfBirth: { type: Date },
-      phoneNumber: { type: String },
-      // Extend as needed
+      phoneNumber: { type: String, trim: true },
+      location: { type: String, trim: true },
+      occupation: { type: String, trim: true },
+      interests: [{ type: String, trim: true }],
+    },
+    // Privacy Settings
+    privacySettings: {
+      profileVisible: { type: Boolean, default: true },
+      showEmail: { type: Boolean, default: false },
+      showStats: { type: Boolean, default: true },
+      allowNotifications: { type: Boolean, default: true },
+    },
+    // User Statistics (calculated fields)
+    stats: {
+      totalMoodEntries: { type: Number, default: 0 },
+      completedGoals: { type: Number, default: 0 },
+      averageMood: { type: Number, default: 0, min: 0, max: 5 },
     },
     responseTagPreference: {
       type: Schema.Types.ObjectId,
@@ -66,6 +83,20 @@ const userSchema = new Schema(
 // Helper to find user by Firebase UID
 userSchema.statics.findByFirebaseUID = function (uid) {
   return this.findOne({ uid });
+};
+
+// Virtual for full name
+userSchema.virtual("fullName").get(function () {
+  if (this.profile.firstName && this.profile.lastName) {
+    return `${this.profile.firstName} ${this.profile.lastName}`;
+  }
+  return this.displayName;
+});
+
+// Method to update user stats
+userSchema.methods.updateStats = async function (statsUpdate) {
+  Object.assign(this.stats, statsUpdate);
+  return this.save();
 };
 
 const User = mongoose.model("User", userSchema);

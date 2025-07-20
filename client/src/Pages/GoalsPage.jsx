@@ -44,6 +44,7 @@ const GoalsPage = () => {
       const statsData = await goalService.getGoalStats(userId);
       setStats(statsData);
     } catch (err) {
+      Toast.error("Failed to fetch goal statistics");
       console.error("Error fetching stats:", err);
     }
   };

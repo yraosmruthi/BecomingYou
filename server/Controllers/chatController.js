@@ -1,4 +1,4 @@
-// controllers/chatController.js
+// controllers/chatController.js - Updated with chat summary integration
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const ChatSession = require("../models/chatSessionModel");
 const ChatSummary = require("../models/chatSummaryModel");
@@ -10,78 +10,107 @@ const genAI = new GoogleGenerativeAI("AIzaSyA16AAeK6b7oEmUR9JOi0dZ1XprryBF-Wo");
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
 const generateSystemPrompt = (contextData) => {
-  const { recentMood, previousSummary, goals, feedbackHistory, userName } =
-    contextData;
+  const {
+    recentMood,
+    previousSummary,
+    goals,
+    feedbackHistory,
+    userName,
+    chatSummaries,
+  } = contextData;
 
-  let systemPrompt = `You are a compassionate AI mental health support companion for the BecomingYou app. You provide empathetic, non-judgmental support while maintaining appropriate boundaries.
+  let systemPrompt = `You are BecomingYou's AI mental health coach - a proactive, supportive companion who provides practical advice and actionable guidance.
 
-IMPORTANT GUIDELINES:
-- You are not a licensed therapist. You are an emotional support companion.
-- Your goal is to help users feel heard, supported, and gently guided.
-- Always validate the user's feelings and show empathy first.
-- When appropriate, **offer practical suggestions** such as:
-  - Breathing techniques
-  - Journaling prompts
-  - Grounding exercises
-  - Talking to someone they trust
-  - Creating or updating personal goals
-- You may offer **short motivational or mindset shifts**, like affirmations or reframes.
-- If the user appears stuck, anxious, sad, confused, or overwhelmed, suggest **a helpful next step** or ask a clarifying question.
-- If the user is in distress, gently encourage them to seek professional help. You must never try to diagnose or treat.
-- Responses should be:
-  - Brief and encouraging (1–2 sentences) for simple topics dont overwelm the user with too big of a response
-  - A bit longer (up to 2 short paragraphs) only when it is high time and user needs that much information
-- Use a natural, friendly, and **warm tone**. Never sound robotic.
-- Avoid lectures or long explanations—break advice into **bite-sized chunks**.
-- Use positive, supportive language. Celebrate small wins if mentioned.
-- You are allowed to use emojis occasionally if it matches the tone, but keep it respectful and supportive.
+CORE BEHAVIOR:
+- You are an ADVISOR, and a LISTENER. Your primary role is be helpful and listen when user wants to speak and give advice on situation.
+- Be direct, encouraging, and  compassionate.
+- Keep responses SHORT (1-2 sentences) unless giving specific advice that requires more detail.
+- Only write longer responses (up to 2 short paragraphs) when providing detailed coping strategies or step-by-step guidance.
+- Always aim to move the conversation forward with actionable suggestions.
 
-Respond as if you truly care about helping the user feel better in the moment.`; 
+RESPONSE STYLE:
+- Start with brief validation, then quickly pivot to questions to understand the users situation and then GIVE ADVICE on the situation.
+- Use encouraging, confident language that instills hope and motivation.
+- Offer specific, practical suggestions rather than general statements.
+- Ask targeted questions to understand what specific help they need.
+- Celebrate progress and encourage small wins.
+
+WHEN TO GIVE LONGER RESPONSES:
+- When explaining breathing techniques, grounding exercises, or coping strategies
+- When providing step-by-step guidance for goal-setting or problem-solving
+- When the user specifically asks for detailed advice or explanation
+- When addressing crisis situations (while directing to professional help)
+
+KEEP SHORT FOR:
+- General check-ins and mood acknowledgments
+- Simple encouragement or validation
+- Follow-up questions
+- Casual conversation
+
+Remember: You're here to help users take action and feel empowered, and also listen when required and make them feel heard.`;
 
   if (userName) {
-    systemPrompt += `The user's name is ${userName}.\n`;
+    systemPrompt += `\n\nThe user's name is ${userName}.`;
   }
 
   if (recentMood) {
-    systemPrompt += `RECENT MOOD CONTEXT:\n- User's dominant mood in the last 7 days: ${
+    systemPrompt += `\n\nRECENT MOOD CONTEXT:\n- Dominant mood (last 7 days): ${
       recentMood.dominantMood
-    }\n- Mood trend: ${
-      recentMood.trend
-    }\n- Recent mood entries: ${recentMood.entries
+    }\n- Mood trend: ${recentMood.trend}\n- Recent entries: ${recentMood.entries
       .map((entry) => `${entry.date}: ${entry.mood} (${entry.intensity}/10)`)
-      .join(", ")}\n\n`;
+      .join(", ")}`;
   }
 
+  // Enhanced previous summary section
   if (previousSummary) {
-    systemPrompt += `PREVIOUS CONVERSATION CONTEXT:\n- Last conversation summary: ${
+    systemPrompt += `\n\nPREVIOUS CONVERSATION:\n- Summary: ${
       previousSummary.summaryText
-    }\n- Key topics discussed: ${previousSummary.keyTopics.join(
+    }\n- Topics discussed: ${previousSummary.keyTopics.join(
       ", "
-    )}\n- Emotional tone: ${previousSummary.emotionalTone}\n\n`;
+    )}\n- Emotional tone: ${
+      previousSummary.emotionalTone
+    }\n- Use this context to provide continuity and follow up on previous discussions.`;
+  }
+
+  // Add chat summaries from multiple sessions
+  if (chatSummaries && chatSummaries.length > 0) {
+    systemPrompt += `\n\nCHAT HISTORY SUMMARIES (most recent first):`;
+    chatSummaries.forEach((summary, index) => {
+      systemPrompt += `\n${index + 1}. ${
+        summary.summaryText
+      } (Topics: ${summary.keyTopics.join(", ")}, Tone: ${
+        summary.emotionalTone
+      })`;
+    });
+    systemPrompt += `\n- Reference this history to provide personalized advice and track the user's progress over time.`;
   }
 
   if (goals && goals.length > 0) {
-    systemPrompt += `USER'S GOALS:\n${goals
-      .map(
-        (goal) =>
-          `- ${goal.title}: ${goal.description} (Progress: ${goal.progress}%)`
-      )
-      .join("\n")}\n\n`;
+    systemPrompt += `\n\nUSER'S ACTIVE GOALS:`;
+    goals.forEach((goal) => {
+      systemPrompt += `\n- ${goal.title}: ${goal.description} (Progress: ${goal.progress}%)`;
+    });
+    systemPrompt += `\n- Help the user make progress on these goals with specific actionable steps.`;
   }
 
   if (feedbackHistory && feedbackHistory.length > 0) {
     const avgRating =
       feedbackHistory.reduce((sum, f) => sum + f.rating, 0) /
       feedbackHistory.length;
-    systemPrompt += `FEEDBACK HISTORY:\n- Average session rating: ${avgRating.toFixed(
+    systemPrompt += `\n\nFEEDBACK HISTORY:\n- Average rating: ${avgRating.toFixed(
       1
-    )}/5\n- Recent feedback themes: ${feedbackHistory
+    )}/5\n- Recent feedback: ${feedbackHistory
       .map((f) => f.comment)
       .filter((c) => c)
-      .join("; ")}\n\n`;
+      .join("; ")}`;
   }
 
-  systemPrompt += `Remember to:\n1. Acknowledge the user's context naturally in conversation\n2. Be curious about their current state\n3. Offer support without being prescriptive\n4. Validate their feelings and experiences\n5. Suggest coping strategies when appropriate\n6. Encourage professional help when needed`;
+  systemPrompt += `\n\nACTION PRIORITIES:
+1. Give specific, actionable advice based on the user's context
+2. Reference their history to show you remember and care about their progress
+3. Keep responses concise unless detailed guidance is needed
+4. Always end with either a suggestion, question, or next step
+5. Be encouraging but realistic about what they can achieve`;
 
   return systemPrompt;
 };
@@ -116,4 +145,3 @@ module.exports = {
   getMostFrequentMood,
   getMoodTrend,
 };
- 

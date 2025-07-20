@@ -16,6 +16,7 @@ const {
   getOverdueGoals,
 } = require("../Controllers/goalController");
 
+const Goal = require("../models/goalModel");
 // Validation error handler
 const handleValidationErrors = (req, res, next) => {
   const errors = validationResult(req);
@@ -36,7 +37,7 @@ const verifyGoalOwnership = async (req, res, next) => {
     const userId = req.user.uid; // From Firebase decoded token
 
     // Check if goal belongs to authenticated user
-    const Goal = require("../models/Goal");
+    const Goal = require("../models/goalModel");
     const goal = await Goal.findById(id);
 
     if (!goal) {

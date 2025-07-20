@@ -11,6 +11,7 @@ import {
   X,
   LogOut,
   Home,
+  Settings,
 } from "lucide-react";
 
 const Navbar = ({ currentRoute, user, onLogout }) => {
@@ -22,6 +23,7 @@ const Navbar = ({ currentRoute, user, onLogout }) => {
         { path: "/profile", label: "Dashboard", icon: Home },
         { path: "/chat", label: "Chat", icon: MessageCircle },
         { path: "/goals", label: "Goals", icon: Target },
+        { path: "/settings", label: "Settings", icon: Settings },
       ]
     : [
         { path: "/", label: "Home", icon: Home },
@@ -31,7 +33,7 @@ const Navbar = ({ currentRoute, user, onLogout }) => {
   return (
     <nav
       className="backdrop-blur-lg shadow-sm border-b sticky top-0 z-50 transition-colors duration-500 
-        bg-gradient-to-br from-black/95 via-gray-900/95 to-black/95 border-gray-800/30"  
+        bg-gradient-to-br from-black/95 via-gray-900/95 to-black/95 border-gray-800/30"
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
@@ -58,19 +60,73 @@ const Navbar = ({ currentRoute, user, onLogout }) => {
                 <span>{item.label}</span>
               </Button>
             ))}
+
             {user && (
-              <Button
-                variant="ghost"
-                onClick={onLogout}
-                className="flex items-center space-x-2"
-              >
-                <LogOut className="h-4 w-4" />
-                <span>Logout</span>
-              </Button>
+              <div className="flex items-center space-x-3 ml-4">
+                {/* Profile Photo */}
+                <motion.button
+                  onClick={() => navigate("/profile")}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="relative group"
+                >
+                  <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-purple-500/50 hover:border-purple-500 transition-colors duration-200 bg-gradient-to-br from-purple-600 to-blue-600">
+                    {user.photoURL ? (
+                      <img
+                        src={user.photoURL}
+                        alt="Profile"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-white font-semibold text-sm">
+                        {user.displayName
+                          ? user.displayName.charAt(0).toUpperCase()
+                          : user.email?.charAt(0).toUpperCase() || "U"}
+                      </div>
+                    )}
+                  </div>
+                  <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-gray-900 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
+                </motion.button>
+
+                <Button
+                  variant="ghost"
+                  onClick={onLogout}
+                  className="flex items-center space-x-2"
+                >
+                  <LogOut className="h-4 w-4" />
+                  <span>Logout</span>
+                </Button>
+              </div>
             )}
           </div>
 
+          {/* Mobile menu button */}
           <div className="md:hidden flex items-center space-x-2">
+            {user && (
+              <motion.button
+                onClick={() => navigate("/profile")}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="relative"
+              >
+                <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-purple-500/50 bg-gradient-to-br from-purple-600 to-blue-600">
+                  {user.photoURL ? (
+                    <img
+                      src={user.photoURL}
+                      alt="Profile"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-white font-semibold text-xs">
+                      {user.displayName
+                        ? user.displayName.charAt(0).toUpperCase()
+                        : user.email?.charAt(0).toUpperCase() || "U"}
+                    </div>
+                  )}
+                </div>
+              </motion.button>
+            )}
+
             <Button variant="ghost" onClick={() => setIsMenuOpen(!isMenuOpen)}>
               {isMenuOpen ? (
                 <X className="h-5 w-5" />
@@ -81,6 +137,7 @@ const Navbar = ({ currentRoute, user, onLogout }) => {
           </div>
         </div>
 
+        {/* Mobile menu */}
         <AnimatePresence>
           {isMenuOpen && (
             <motion.div
