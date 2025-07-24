@@ -82,7 +82,7 @@ Remember: You're here to help users take action and feel empowered, and also lis
         summary.emotionalTone
       })`;
     });
-    systemPrompt += `\n- Reference this history to provide personalized advice and track the user's progress over time.`;
+    systemPrompt += `\n- Use this context to give better personalised responses.`;
   }
 
   if (goals && goals.length > 0) {
@@ -107,7 +107,7 @@ Remember: You're here to help users take action and feel empowered, and also lis
 
   systemPrompt += `\n\nACTION PRIORITIES:
 1. Give specific, actionable advice based on the user's context
-2. Reference their history to show you remember and care about their progress
+2. Reference their chat summary to show you remember and care about their progress
 3. Keep responses concise unless detailed guidance is needed
 4. Always end with either a suggestion, question, or next step
 5. Be encouraging but realistic about what they can achieve`;

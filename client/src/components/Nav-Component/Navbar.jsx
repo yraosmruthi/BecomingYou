@@ -23,7 +23,7 @@ const Navbar = ({ currentRoute, user, onLogout }) => {
         { path: "/profile", label: "Dashboard", icon: Home },
         { path: "/chat", label: "Chat", icon: MessageCircle },
         { path: "/goals", label: "Goals", icon: Target },
-        { path: "/settings", label: "Settings", icon: Settings },
+        
       ]
     : [
         { path: "/", label: "Home", icon: Home },
@@ -64,29 +64,7 @@ const Navbar = ({ currentRoute, user, onLogout }) => {
             {user && (
               <div className="flex items-center space-x-3 ml-4">
                 {/* Profile Photo */}
-                <motion.button
-                  onClick={() => navigate("/profile")}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="relative group"
-                >
-                  <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-purple-500/50 hover:border-purple-500 transition-colors duration-200 bg-gradient-to-br from-purple-600 to-blue-600">
-                    {user.photoURL ? (
-                      <img
-                        src={user.photoURL}
-                        alt="Profile"
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-white font-semibold text-sm">
-                        {user.displayName
-                          ? user.displayName.charAt(0).toUpperCase()
-                          : user.email?.charAt(0).toUpperCase() || "U"}
-                      </div>
-                    )}
-                  </div>
-                  <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-gray-900 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
-                </motion.button>
+                
 
                 <Button
                   variant="ghost"

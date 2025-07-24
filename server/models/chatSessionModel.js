@@ -40,11 +40,16 @@ const chatSessionSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: "Feedback",
     },
+    systemPrompt: {
+      type: String,
+      required: true,
+    },
   },
   {
     timestamps: true,
   }
 );
+
 
 chatSessionSchema.methods.addMessage = function (sender, text) {
   this.messages.push({

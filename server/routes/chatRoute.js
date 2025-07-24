@@ -92,28 +92,117 @@ router.get("/context/:userId", verifyFirebaseToken, async (req, res) => {
   }
 });
 
-router.post("/session/start", verifyFirebaseToken, async (req, res) => {
-  try {
-    const { userId } = req.body;
-    if (req.user.uid !== userId)
-      return res.status(403).json({ error: "Unauthorized" });
+  // Replace your current /session/start route with this fixed version
 
-    const chatSession = new ChatSession({
-      userId,
-      messages: [],
-      startedAt: new Date(),
-    });
-    await chatSession.save();
+  router.post("/session/start", verifyFirebaseToken, async (req, res) => {
+    try {
+      const { userId } = req.body;
+      if (req.user.uid !== userId)
+        return res.status(403).json({ error: "Unauthorized" });
 
-    res.json({
-      success: true,
-      data: { sessionId: chatSession._id, startedAt: chatSession.startedAt },
-    });
-  } catch (error) {
-    console.error("Error starting session:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
+      // Fetch context data to generate personalized system prompt
+      try {
+        const [
+          moodLogs,
+          goals,
+          recentSessions,
+          feedbackHistory,
+          chatSummaries,
+        ] = await Promise.all([
+          MoodEntry.find({ userId }).sort({ date: -1 }).limit(7),
+          Goal.find({ userId, isActive: true }),
+          ChatSession.find({ userId })
+            .sort({ createdAt: -1 })
+            .limit(3)
+            .populate("summary"),
+          Feedback.find({ userId }).sort({ submittedAt: -1 }).limit(10),
+          ChatSummary.find({
+            chatSession: {
+              $in: await ChatSession.find({ userId }).distinct("_id"),
+            },
+          })
+            .sort({ createdAt: -1 })
+            .limit(5)
+            .select("summaryText keyTopics emotionalTone createdAt"),
+        ]);
+
+        const recentMood =
+          moodLogs.length > 0
+            ? {
+                dominantMood: getMostFrequentMood(moodLogs),
+                trend: getMoodTrend(moodLogs),
+                entries: moodLogs.map((log) => ({
+                  date: log.date.toISOString().split("T")[0],
+                  mood: log.mood.label,
+                  intensity: log.mood.value,
+                })),
+              }
+            : null;
+
+        const previousSummary = recentSessions[0]?.summary || null;
+
+        const contextData = {
+          recentMood,
+          previousSummary,
+          goals,
+          feedbackHistory,
+          userName: req.user.name || null,
+          chatSummaries: chatSummaries || [],
+        };
+
+        // Generate personalized system prompt
+        const systemPrompt = generateSystemPrompt(contextData);
+
+        const chatSession = new ChatSession({
+          userId,
+          systemPrompt: systemPrompt, // Required field with personalized context
+          messages: [],
+          startedAt: new Date(),
+        });
+
+        await chatSession.save();
+
+        res.json({
+          success: true,
+          data: {
+            sessionId: chatSession._id,
+            startedAt: chatSession.startedAt,
+          },
+        });
+      } catch (contextError) {
+        console.error("Error fetching context, using default:", contextError);
+
+        // Fallback to default system prompt if context fetch fails
+        const defaultSystemPrompt = `You are BecomingYou's AI mental health coach - a proactive, supportive companion who provides practical advice and actionable guidance.
+
+CORE BEHAVIOR:
+- You are an ADVISOR, and a LISTENER. Your primary role is be helpful and listen when user wants to speak and give advice on situation.
+- Be direct, encouraging, and compassionate.
+- Keep responses SHORT (1-2 sentences) unless giving specific advice that requires more detail.`;
+
+        const chatSession = new ChatSession({
+          userId,
+          systemPrompt: defaultSystemPrompt,
+          messages: [],
+          startedAt: new Date(),
+        });
+
+        await chatSession.save();
+
+        res.json({
+          success: true,
+          data: {
+            sessionId: chatSession._id,
+            startedAt: chatSession.startedAt,
+          },
+        });
+      }
+    } catch (error) {
+      console.error("Error starting session:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
 
 router.post("/message", verifyFirebaseToken, async (req, res) => {
   try {

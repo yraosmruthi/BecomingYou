@@ -48,7 +48,7 @@ const AppContent = ({ user, onLogout, onLogin }) => {
           <Route path="/profile" element={<ProfileDashboard />} />
           <Route path="/chat" element={<ChatPage />} />
           <Route path="/goals" element={<GoalsPage />} />
-          <Route path="/settings" element={<ProfileSettingsPage />} />
+          
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </div>
